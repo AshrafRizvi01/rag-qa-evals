@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+    "deepeval: marks tests that run deepeval LLM evaluation metrics",
+]

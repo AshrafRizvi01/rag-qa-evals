@@ -1,0 +1,77 @@
+[
+  {
+    "question": "How many days before my trip do I need to pay the full balance?",
+    "answer": "The remaining balance must be paid in full at least 15 days before the travel date.",
+    "source": "booking-payment.md"
+  },
+  {
+    "question": "What is the cancellation fee if I cancel a domestic trip 40 days before travel?",
+    "answer": "Domestic cancellations made 30+ days before the travel date incur a 10% cancellation fee on the total package value.",
+    "source": "cancellation.md"
+  },
+  {
+    "question": "Can I cancel a zero cancellation plan 10 days before travel?",
+    "answer": "No, zero cancellation plans can only be cancelled up to 30 days before the travel date; after that, no cancellations are permitted.",
+    "source": "cancellation.md"
+  },
+  {
+    "question": "Do infants need to pay full price for a travel package?",
+    "answer": "Infants under 2 years travel at 10% of the adult package price and are not guaranteed a separate seat.",
+    "source": "child-infant-policy.md"
+  },
+  {
+    "question": "How long does it take for Sunshine Travels to acknowledge a complaint?",
+    "answer": "Sunshine Travels will acknowledge all complaints within 48 hours of receipt.",
+    "source": "complaints-grievance.md"
+  },
+  {
+    "question": "Will I get a refund if I miss my flight due to late check-in?",
+    "answer": "No, missed flights due to late check-in are not eligible for rebooking or refund by Sunshine Travels.",
+    "source": "flight-policy.md"
+  },
+  {
+    "question": "What happens to my trip if there is a natural disaster at my destination?",
+    "answer": "Sunshine Travels is not liable for disruptions caused by events like natural disasters, and affected travelers will be offered a rescheduled travel date or a credit voucher valid for 12 months, where possible.",
+    "source": "force-majeure.md"
+  },
+  {
+    "question": "Do I need to disclose medical conditions before traveling?",
+    "answer": "Yes, travelers must disclose any pre-existing medical conditions at the time of booking.",
+    "source": "health-safety.md"
+  },
+  {
+    "question": "What time is hotel check-in and check-out?",
+    "answer": "Standard check-in time is 2:00 PM and check-out time is 11:00 AM, subject to the hotel's own policy.",
+    "source": "hotel-accommodation.md"
+  },
+  {
+    "question": "How many free itinerary changes am I allowed per booking?",
+    "answer": "Each booking is eligible for a maximum of two free-of-change-fee itinerary modifications per plan terms, if specified in the plan.",
+    "source": "itinerary-changes.md"
+  },
+  {
+    "question": "What is the standard check-in baggage allowance?",
+    "answer": "Standard baggage allowance is 1 check-in bag up to 23kg and 1 cabin bag up to 7kg per traveler, unless the airline specifies otherwise.",
+    "source": "luggage-baggage.md"
+  },
+  {
+    "question": "How long before travel should my passport remain valid?",
+    "answer": "The passport must be valid for at least 6 months beyond the return travel date.",
+    "source": "passport.md"
+  },
+  {
+    "question": "How many days I have for refund?",
+    "answer": "Approved refunds are issued to the original payment method within 7–10 business days after cancellation.",
+    "source": "refunds.md"
+  },
+  {
+    "question": "Is travel insurance mandatory for international trips?",
+    "answer": "Yes, travel insurance is mandatory for all international travel plans and optional for domestic plans.",
+    "source": "travel-insurance.md"
+  },
+  {
+    "question": "How early should I apply for a visa before my trip?",
+    "answer": "Travelers should apply for their visa at least 4–6 weeks before the travel date, as processing times vary by country.",
+    "source": "visa-requirements.md"
+  }
+]
