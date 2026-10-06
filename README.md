@@ -128,7 +128,7 @@ _Fill these in from your own runs. Don't copy numbers you haven't measured._
 | Retrieval (expected doc in top 3) | 100% | 16 / 16 pass |
 | Out-of-scope refusals | all pass | 2 / 2 pass |
 | Direct injection payloads | all refused | 2 / 2 refused |
-| Indirect injection, before chunk filter | – | _3 of 5 runs failed_ |
+| Indirect injection, before chunk filter | 3 failures | _3 of 5 runs failed_ |
 | Indirect injection, after chunk filter | 0 failures | 5 / 5 runs pass |
 | Answer Relevancy (avg) | 0.5 | 0.80 (15 questions) |
 | Faithfulness (avg) | 0.5 | 0.93 (14 questions, 1 N/A) |
