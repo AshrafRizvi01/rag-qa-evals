@@ -66,6 +66,13 @@ def retrieve(query, index, k=3):
 def answer(question, indexed, k=3):
     REFUSAL_MESSAGE = "I don't know."
     OFF_TOPIC_WORDS = ["system_prompt", "instructions", "developer mode", "rules"]
+    PROMPT_EMPTY = "The question is empty."
+    PROMPT_TOO_LONG = "The question is too long."
+
+    if not question or not question.strip():
+        return PROMPT_EMPTY, []
+    if len(question) > 1000:
+        return PROMPT_TOO_LONG, []
 
     hits = retrieve(question, indexed, k=k)
     hits = clean(hits)
@@ -88,8 +95,11 @@ def answer(question, indexed, k=3):
         data=body,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req) as resp:
-        text = json.loads(resp.read())["response"]
+    try:
+        with urllib.request.urlopen(req) as resp:
+            text = json.loads(resp.read())["response"]
+    except Exception as e:
+        text = REFUSAL_MESSAGE
 
     text = text.strip()
     if any(word in question.lower() for word in OFF_TOPIC_WORDS):
@@ -105,7 +115,7 @@ def main():
     for doc in docs:
         all_chunks.extend(chunk(doc["text"], doc["source"]))
     indexed = index(all_chunks)
-    question = "How many days I have for refund?"
+    question = "What is your infant policy?"
     answer_text, hits = answer(question, indexed)
     print("Question:", question)
     print("Answer:", answer_text)

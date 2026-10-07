@@ -1,0 +1,29 @@
+name: deepeval
+
+# Manual only: never runs on push/PR. Requires approval via the "deepeval"
+# environment's required reviewers (configure in GitHub repo Settings ->
+# Environments -> deepeval -> Required reviewers).
+on:
+  workflow_dispatch:
+
+jobs:
+  deepeval:
+    runs-on: self-hosted
+    environment: deepeval
+    steps:
+      - uses: actions/checkout@v4
+
+      # Runner already has Ollama installed, serving, and both models pulled
+      # (llama3.2, nomic-embed-text) — no install/pull step, no GitHub-hosted
+      # runner minutes spent on multi-GB downloads.
+      - name: Install Python deps
+        run: |
+          source .venv/bin/activate
+          python3 -m pip install -r requirements.txt
+
+      - name: Run deepeval evals
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          source .venv/bin/activate
+          pytest -m deepeval -q
