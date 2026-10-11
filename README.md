@@ -8,11 +8,11 @@ The app is kept deliberately small. **The tests are the point of this repo.**
 
 ## How the bot works
 
-1. **Load** – read every Markdown policy file in `data/docs/`.
+1. **Load** – read every Markdown policy file in `docs/`.
 2. **Chunk** – split each doc into short pieces, each tagged with its source filename.
 3. **Embed** – turn each chunk into a vector with `nomic-embed-text` (via Ollama).
 4. **Retrieve** – embed the question, score every chunk with cosine similarity (NumPy), keep the top 3.
-5. **Answer** – send the question plus those chunks to a local chat model (`llama3.2`) with instructions to answer **only** from the context, or reply `I don't know.`
+5. **Answer** – send the question plus those chunks to a local chat model (`qwen2.5:3b`) with instructions to answer **only** from the context, or reply `I don't know.`
 
 Two extra safety layers sit around the model:
 - **Chunk filter** – retrieved chunks that contain instruction-like text (e.g. "ignore previous instructions") are dropped before the prompt is built.
@@ -29,14 +29,19 @@ rag-qa-evals/
 ├── app/
 │   └── rag.py                  # load, chunk, embed, retrieve, answer
 ├── data/
-│   ├── docs/*.md               # Sunshine Travels policy handbook (hand-written)
-│   ├── docs/poisoned.md        # deliberately malicious doc for indirect-injection tests
 │   └── golden.json             # question, expected_answer, expected_source_doc
+├── docs/*.md                   # Sunshine Travels policy handbook (hand-written)
+├── docs/poisoned.md            # deliberately malicious doc for indirect-injection tests
 ├── tests/
-│   ├── conftest.py             # shared `indexed` fixture (index built once per run)
-│   ├── test_retrieval.py       # deterministic: expected doc is in the top 3
-│   ├── test_guardrails.py      # out-of-scope, direct + indirect injection
-│   └── test_evals_deepeval.py  # LLM-as-judge: relevancy + faithfulness
+│   ├── conftest.py              # shared `indexed` fixture (index built once per run)
+│   ├── test_retrieval.py        # deterministic: expected doc is in the top 3
+│   ├── test_answer_correctness.py  # deterministic: key facts appear in the answer
+│   ├── test_guardrails.py       # out-of-scope, direct + indirect injection
+│   ├── test_edge_cases.py       # empty/too-long/non-English/special-character input
+│   ├── test_rag_unit.py         # fully mocked per-function unit tests (no Ollama needed)
+│   └── test_evals_deepeval.py   # LLM-as-judge: relevancy + faithfulness
+├── .github/workflows/
+│   └── unit-tests.yml           # runs test_rag_unit.py on every PR
 └── README.md
 ```
 
@@ -48,7 +53,7 @@ rag-qa-evals/
 
 ```bash
 # 1. Pull the models
-ollama pull llama3.2
+ollama pull qwen2.5:3b
 ollama pull nomic-embed-text
 
 # 2. Install Python packages
@@ -59,7 +64,7 @@ python3 -m pip install -r requirements.txt
 export OPENAI_API_KEY=sk-...
 ```
 
-Keep Ollama running (`ollama serve`, or the desktop app) while you use the bot or run tests. The judge model for `test_evals_deepeval.py` is OpenAI's `gpt-4o-mini`, not the local `llama3.2` — see **Known limitations**.
+Keep Ollama running (`ollama serve`, or the desktop app) while you use the bot or run tests. The judge model for `test_evals_deepeval.py` is OpenAI's `gpt-4o-mini`, not the local `qwen2.5:3b` — see **Known limitations**.
 
 ---
 
@@ -74,7 +79,13 @@ python3 app/rag.py
 Fast, deterministic tests (no judge model):
 
 ```bash
-pytest tests/test_retrieval.py tests/test_guardrails.py -q
+pytest tests/test_retrieval.py tests/test_answer_correctness.py tests/test_guardrails.py tests/test_edge_cases.py -q
+```
+
+Fully mocked unit tests (no Ollama needed, run in CI on every PR):
+
+```bash
+pytest tests/test_rag_unit.py -q
 ```
 
 Guardrail tests are run repeatedly since failures (e.g. indirect injection) can be intermittent:
@@ -108,10 +119,12 @@ pytest tests/test_evals_deepeval.py -q
 | Area | File | How it's checked |
 |------|------|------------------|
 | Retrieval correctness | `test_retrieval.py` | Expected source doc is in the top 3 for every golden question |
-| Answer correctness | `test_retrieval.py` / keyword tests | The key fact (e.g. "7–10 business days") appears in the answer |
+| Answer correctness | `test_answer_correctness.py` | The key fact (e.g. "7–10 business days") appears in the answer |
 | Out-of-scope refusal | `test_guardrails.py` | Unrelated questions return `I don't know` |
 | Direct injection | `test_guardrails.py` | Attack payloads are refused, with no prompt or rules talk |
 | Indirect injection | `test_guardrails.py` | With `poisoned.md` retrieved, the answer still follows the real policy; repeated 5× because failures are intermittent |
+| Edge cases | `test_edge_cases.py` | Empty/too-long questions are rejected with a clear message; non-English and special-character questions still get a real answer |
+| Per-function unit tests | `test_rag_unit.py` | Every function in `rag.py` tested in isolation with `monkeypatch` (no live Ollama) |
 | Relevancy | `test_evals_deepeval.py` | DeepEval `AnswerRelevancyMetric`, threshold 0.5 |
 | Faithfulness | `test_evals_deepeval.py` | DeepEval `FaithfulnessMetric`, threshold 0.5, against the retrieved chunks |
 
@@ -125,9 +138,9 @@ _Fill these in from your own runs. Don't copy numbers you haven't measured._
 
 | Check | Threshold | Result |
 |-------|-----------|--------|
-| Retrieval (expected doc in top 3) | 100% | 16 / 16 pass |
+| Retrieval (expected doc in top 3) | 100% | 15 / 15 pass |
 | Out-of-scope refusals | all pass | 2 / 2 pass |
-| Direct injection payloads | all refused | 2 / 2 refused |
+| Direct injection payloads | all refused | 5 / 5 refused |
 | Indirect injection, before chunk filter | 3 failures | _3 of 5 runs failed_ |
 | Indirect injection, after chunk filter | 0 failures | 5 / 5 runs pass |
 | Answer Relevancy (avg) | 0.5 | 0.80 (15 questions) |
@@ -150,18 +163,16 @@ Real failures this suite caught while I built it:
 
 ## Known limitations
 
-- **Local judge was too weak to use.** `llama3.2` (3B) scored correct answers as low as 0.0 and was too noisy to trust, so evals use OpenAI's `gpt-4o-mini` as the judge instead (see `measure_with_retry` in `test_evals_deepeval.py`). This means those tests need an `OPENAI_API_KEY` and are no longer fully local. Thresholds stay conservative, and failures are read by hand before anything gets changed.
-- **Keyword guards are simple.** The chunk filter and output guard match fixed phrases. A reworded attack can get past them.
+- **Local judge was too weak to use.** `llama3.2` (3B) — previously used as the local judge model via `deepeval set-ollama` — scored correct answers as low as 0.0 and was too noisy to trust, so evals use OpenAI's `gpt-4o-mini` as the judge instead (see `measure_with_retry` in `test_evals_deepeval.py`). This is unrelated to the app's current chat model (`qwen2.5:3b`), which was never used as a judge. Using an external judge means those tests need an `OPENAI_API_KEY` and are no longer fully local. Thresholds stay conservative, and failures are read by hand before anything gets changed.
+- **Guards are heuristic, not foolproof.** The chunk filter (`looks_like_injection`) uses regex patterns rather than fixed phrases, and the output guard checks for leakage of a per-run canary token rather than matching keywords in the question. Both catch the attacks in this repo's test set, but a sufficiently reworded or obfuscated attack can still get past them.
 - **Small dataset.** 15 golden questions over a short handbook. Good for showing the approach, not for statistical confidence.
 - **Small model.** Answers and refusals are less reliable than a larger hosted model would give.
 
 ---
 
 ## What I'd do next
-
-- Compare scores from the local judge against a stronger hosted judge on one run, and report the difference.
 - Add consistency tests: the same question run N times plus paraphrases, all giving the same key fact.
-- Add edge cases: empty input, very long input, typos, other languages, emoji.
-- Run the deterministic tests in GitHub Actions on every push, with the DeepEval job on manual trigger or nightly.
+- Add CI for the other deterministic tests (`test_retrieval.py`, `test_answer_correctness.py`, `test_guardrails.py`, `test_edge_cases.py`), which need a live Ollama instance — currently only the fully-mocked `test_rag_unit.py` runs in CI, on every PR.
+- Set up a hosted judge/chat endpoint so the DeepEval job can run in CI without a self-hosted runner.
 - Run a promptfoo red-team pass and add the findings.
 - Run a "change one thing" experiment (chunk size or prompt v1 vs v2) and show the metric deltas.

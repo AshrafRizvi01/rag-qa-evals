@@ -1,0 +1,17 @@
+name: unit-tests
+
+on:
+  pull_request:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python3 -m pip install -r requirements.txt
+      # only test_rag_unit.py is fully mocked (no Ollama/network needed);
+      # the other test files require a live Ollama instance
+      - run: pytest tests/test_rag_unit.py -v
