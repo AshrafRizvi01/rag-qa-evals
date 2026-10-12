@@ -134,8 +134,6 @@ pytest tests/test_evals_deepeval.py -q
 
 ## Results
 
-_Fill these in from your own runs. Don't copy numbers you haven't measured._
-
 | Check | Threshold | Result |
 |-------|-----------|--------|
 | Retrieval (expected doc in top 3) | 100% | 15 / 15 pass |
