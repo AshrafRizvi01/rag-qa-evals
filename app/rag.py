@@ -35,7 +35,7 @@ def looks_like_injection(text: str) -> bool:
 def clean(hits):
     return [hit for hit in hits if not looks_like_injection(hit["text"])]
 
-LEAK_MARKERS = [CANARY.lower(), "you answer questions about Sunshine Travels policies only, using the context. "]
+LEAK_MARKERS = [CANARY.lower(), "you answer questions about sunshine travels policies only, using the context."]
 
 def output_guard(output: str) -> str:
     normalized = normalize_text(output)
