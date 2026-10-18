@@ -20,5 +20,5 @@ def test_booking_full_payment_condition(indexed):
 def test_out_of_scope_question(indexed):
     text, _ = answer("What is cancellation policy for Hello travels?", indexed)
     print(text)
-    assert "I don't know" in text or "penalty" in text
+    assert "I don't know" in text
 
