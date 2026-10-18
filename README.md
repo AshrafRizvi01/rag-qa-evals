@@ -100,6 +100,12 @@ LLM-as-judge evals (slow, scores can vary between runs):
 pytest tests/test_evals_deepeval.py -q
 ```
 
+Compare chunk sizes with the "change one thing" experiment (requires Ollama, no judge model):
+
+```bash
+python3 experiments/change_one_thing.py
+```
+
 ---
 
 ## Test strategy
@@ -132,7 +138,7 @@ pytest tests/test_evals_deepeval.py -q
 
 ---
 
-## Results
+## Results f
 
 | Check | Threshold | Result |
 |-------|-----------|--------|
@@ -143,6 +149,20 @@ pytest tests/test_evals_deepeval.py -q
 | Indirect injection, after chunk filter | 0 failures | 5 / 5 runs pass |
 | Answer Relevancy (avg) | 0.5 | 0.80 (15 questions) |
 | Faithfulness (avg) | 0.5 | 0.93 (14 questions, 1 N/A) |
+
+### Chunk-size experiment
+
+The [experiment](experiments/change_one_thing.py) varies only chunk size (300, 500, or 800 characters) across the same 15 golden questions, keeping the models, prompt, and top-3 retrieval setting unchanged.
+
+| chunk size | retrieval(top-3 source) | key-fact hit rate |
+|-----------|------------------------|------------------|
+| 300 | 15/15 | 10/15 |
+| 500 | 15/15 | 11/15 |
+| 800 | 15/15 | 12/15 |
+
+Retrieval counts questions whose expected source document appears in the top three hits. Key-fact hits use a lightweight heuristic: the answer must contain all selected tokens from the expected answer (up to three numeric tokens, or the first two words of at least four letters if there are no numbers). This is not a semantic correctness score.
+
+In this run, retrieval stayed at 100% for every size, while key-fact hits increased from 10/15 (66.7%) to 12/15 (80.0%). The 800-character setting performed best on this small dataset; the app's default remains 500 characters.
 
 ---
 
@@ -173,4 +193,4 @@ Real failures this suite caught while I built it:
 - Add CI for the other deterministic tests (`test_retrieval.py`, `test_answer_correctness.py`, `test_guardrails.py`, `test_edge_cases.py`), which need a live Ollama instance — currently only the fully-mocked `test_rag_unit.py` runs in CI, on every PR.
 - Set up a hosted judge/chat endpoint so the DeepEval job can run in CI without a self-hosted runner.
 - Run a promptfoo red-team pass and add the findings.
-- Run a "change one thing" experiment (chunk size or prompt v1 vs v2) and show the metric deltas.
+- Extend the "change one thing" experiment to compare prompt versions and repeat runs before changing defaults.
